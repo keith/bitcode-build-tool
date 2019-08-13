@@ -120,6 +120,10 @@ class BuildEnvironment(object):
         self.initState(args)
 
     def initState(self, args):
+        # initialize temp directories first because it is needed when error.
+        self.save_temp = args.save_temp
+        self._temp_directories = []
+        self._tool_cache = dict()
         # create console handler and set level to debug
         self.logger = logging.getLogger("bitcode-build-tool")
         ch = logging.StreamHandler(sys.stdout)
@@ -137,26 +141,12 @@ class BuildEnvironment(object):
         self.logger.addHandler(ch)
         self.logger.setLevel(logging.DEBUG)
         # init variables
-        self.sdk = args.sdk_path
-        sdk_setting_path = os.path.join(self.sdk, "SDKSettings.json")
-        if os.path.isfile(sdk_setting_path):
-            with open(sdk_setting_path, 'r') as f:
-                try:
-                    settings = json.load(f)
-                    self.sdk_version = settings.get("Version", "0.0")
-                except ValueError:
-                    self.sdk_version = "0.0"
-        else:
-            self.sdk_version = "0.0"
-
         self.version = "1.0"
         self.platform = None
         self.tool_path = args.tool_path + [self.TOOL_PATH]
         self.addLibraryList(args.library_list)
         self.dylib_search_path = args.include
         self.translate_watchos = args.translate_watchos
-        self.save_temp = args.save_temp
-        self._tool_cache = dict()
         self.thread_pool = None
         self.verify_mode = args.verify
         self.thread_pool = ThreadPool(args.j)
@@ -164,11 +154,11 @@ class BuildEnvironment(object):
         self.compile_with_clang = args.compile_with_clang
         if self.liblto is not None and not os.path.exists(self.liblto):
             env.error("libLTO path does not exists: {}".format(self.liblto))
-        self._temp_directories = []
         if args.symbol_map is not None:
             self.deobfuscator = LogDeobfuscator(args.symbol_map)
         else:
             self.deobfuscator = None
+        self.setSDKPath(args.sdk_path)
         self.logger.debug("SDK path: {}".format(self.sdk))
         self.logger.debug("SDK version: {}".format(self.sdk_version))
         self.logger.debug("PATH: {}".format(self.tool_path))
@@ -193,7 +183,21 @@ class BuildEnvironment(object):
         self.tool_path = paths + self.tool_path
 
     def setSDKPath(self, sdk):
+        if sdk is None:
+            self.sdk_version = "0.0"
+            return
+
         self.sdk = sdk
+        sdk_setting_path = os.path.join(self.sdk, "SDKSettings.json")
+        if os.path.isfile(sdk_setting_path):
+            with open(sdk_setting_path, 'r') as f:
+                try:
+                    settings = json.load(f)
+                    self.sdk_version = settings.get("Version", "0.0")
+                except ValueError:
+                    self.sdk_version = "0.0"
+        else:
+            self.sdk_version = "0.0"
 
     def setParallelJobs(self, number):
         self.thread_pool = ThreadPool(number)
@@ -238,7 +242,7 @@ class BuildEnvironment(object):
                 sdk = subprocess.check_output(cmd, env=self.XCRUN_ENV)
             except subprocess.CalledProcessError:
                 env.error("Could not infer SDK path")
-            self.sdk = sdk.split()[0]
+            self.setSDKPath(sdk.split()[0])
             self.debug("SDK PATH: {}".format(self.sdk))
 
     def getPlatform(self):

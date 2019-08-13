@@ -55,6 +55,7 @@ class ClangOptVerifier(OptionVerifier):
         # Output options
         self.add_argument('-emit-obj', action='store_true', required=True)
         self.add_argument('-triple', type=str)
+        self.add_argument('-target-sdk-version', type=str)
         # Optimizations
         self.add_argument('-O')
         self.add_argument('-disable-llvm-optzns', action='store_true')
@@ -71,6 +72,7 @@ class ClangOptVerifier(OptionVerifier):
         self.add_argument('-freciprocal-math', action='store_true')
         self.add_argument('-ffp-contract')
         self.add_argument('-target-abi')
+        self.add_argument('-faligned-alloc-unavailable', action='store_true')
         self.add_argument('-mfloat-abi')
         self.add_argument('-mllvm')
 

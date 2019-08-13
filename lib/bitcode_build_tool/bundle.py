@@ -199,8 +199,8 @@ class BitcodeBundle(xar):
                 clang = Clang(name, output_name, self.dir)
                 options = [x.text if x.text is not None else ""
                            for x in xml_node.find("swift").findall("cmd")]
-                options = SwiftArgTranslator.upgrade(options, self.arch)
                 if swift_option_verifier.verify(options):
+                    options = SwiftArgTranslator.upgrade(options, self.arch)
                     options = SwiftArgTranslator.translate_to_clang(options)
                     if self.force_optimize_swift:
                         options = ClangCC1Translator.add_optimization(options)
