@@ -3,7 +3,7 @@ import subprocess
 import shutil
 import xml.etree.ElementTree as ET
 
-from buildenv import env, BitcodeBuildFailure
+from buildenv import env, BitcodeBuildFailure, BuildEnvironment
 from cmdtool import Clang, Swift, Ld, CopyFile, RewriteArch
 from verifier import clang_option_verifier, ld_option_verifier, \
     swift_option_verifier
@@ -114,6 +114,25 @@ class BitcodeBundle(xar):
             linker_options.extend(["-syslibroot", env.getSDK()])
         if self.sdk_version is not None and self.sdk_version != "NA":
             linker_options.extend(["-sdk_version", self.sdk_version])
+
+        # WatchKit's _main has been hidden from the static linker beginning with the watchOS 6 SDK.
+        # If we are building against a SDK newer than 6.0 but the original SDK version is less than 6.0,
+        # replace the entry point with _WKExtensionMain and link to WKExtensionMainLegacy static library.
+        if env.getPlatform() == "watchos" and env.satisfiesSDKVersion("6.0") and \
+                not BuildEnvironment.satisfiesVersion("6.0", self.sdk_version):
+            # Look for -e option in the linker flags
+            try:
+                main_func = linker_options.index("-e")
+                if main_func < (len(linker_options) - 1):
+                    if linker_options[main_func + 1] == "_main":
+                        linker_options[main_func + 1] = "_WKExtensionMain"
+                    else:
+                        linker_options.extend(["-alias", "_WKExtensionMain", "_main"])
+                    lib_main = env.resolveDylibs(self.arch, "libWKExtensionMainLegacy.a")
+                    linker_options.extend([lib_main])
+            except ValueError:
+                pass  # no entry point, `ld -r`
+
         return linker_options
 
     @property
@@ -284,9 +303,9 @@ class BitcodeBundle(xar):
                 f.write('\n')
         linker.addArgs(["-filelist", LinkFileList])
         # version specific arguments
-        if env.satifiesLinkerVersion("253.2"):
+        if env.satisfiesLinkerVersion("253.2"):
             linker.addArgs(["-ignore_auto_link"])
-        if env.satifiesLinkerVersion("253.3.1"):
+        if env.satisfiesLinkerVersion("253.3.1"):
             linker.addArgs(["-allow_dead_duplicates"])
         # add libLTO.dylib if needed
         if env.liblto is not None:
@@ -307,7 +326,7 @@ class BitcodeBundle(xar):
                         linker.addArgs(["-weak_library", lib_path])
 
         # add swift library search path, only when auto-link cannot be ignored.
-        if self.contain_swift and not env.satifiesLinkerVersion("253.2"):
+        if self.contain_swift and not env.satisfiesLinkerVersion("253.2"):
             swiftLibPath = env.getlibSwiftPath(self.arch)
             if swiftLibPath is not None:
                 linker.addArgs(["-L", swiftLibPath])

@@ -4,6 +4,7 @@ import subprocess
 import logging
 import tempfile
 import shutil
+import json
 from multiprocessing.pool import ThreadPool
 from translate import FrameworkUpgrader
 
@@ -137,6 +138,17 @@ class BuildEnvironment(object):
         self.logger.setLevel(logging.DEBUG)
         # init variables
         self.sdk = args.sdk_path
+        sdk_setting_path = os.path.join(self.sdk, "SDKSettings.json")
+        if os.path.isfile(sdk_setting_path):
+            with open(sdk_setting_path, 'r') as f:
+                try:
+                    settings = json.load(f)
+                    self.sdk_version = settings.get("Version", "0.0")
+                except ValueError:
+                    self.sdk_version = "0.0"
+        else:
+            self.sdk_version = "0.0"
+
         self.version = "1.0"
         self.platform = None
         self.tool_path = args.tool_path + [self.TOOL_PATH]
@@ -158,6 +170,7 @@ class BuildEnvironment(object):
         else:
             self.deobfuscator = None
         self.logger.debug("SDK path: {}".format(self.sdk))
+        self.logger.debug("SDK version: {}".format(self.sdk_version))
         self.logger.debug("PATH: {}".format(self.tool_path))
 
     def error(self, msg, exception=BitcodeBuildFailure("Bitcode Build Failure")):
@@ -409,22 +422,30 @@ class BuildEnvironment(object):
             self.debug(u"Found swift dylib path: {}".format(unicode(swiftlib_path, "utf-8")))
             return swiftlib_path
 
-    def satifiesLinkerVersion(self, version):
+    @staticmethod
+    def satisfiesVersion(base, version):
         try:
-            version_tuple = self._tool_cache["ld_version"]
+            version_tuple = tuple(map(int, version.split('.')))
+            check_tuple = tuple(map(int, base.split('.')))
+        except ValueError:
+            # fail to detect version number, return false
+            return False
+        finally:
+            return version_tuple >= check_tuple
+
+    def satisfiesLinkerVersion(self, version):
+        try:
+            ld_version = self._tool_cache["ld_version"]
         except KeyError:
             linker_vers = subprocess.check_output([self.getTool('ld'), '-v'],
                                                   stderr=subprocess.STDOUT)
-            version_string = linker_vers.split('\n')[0].split('-')[-1]
-            try:
-                version_tuple = tuple(map(int, version_string.split('.')))
-            except ValueError:
-                # fail to detect version number, return false
-                return False
-            else:
-                self._tool_cache["ld_version"] = version_tuple
-        check_tuple = tuple(map(int, version.split('.')))
-        return version_tuple >= check_tuple
+            ld_version = linker_vers.split('\n')[0].split('-')[-1]
+            self._tool_cache["ld_version"] = ld_version
+        finally:
+            return BuildEnvironment.satisfiesVersion(version, ld_version)
+
+    def satisfiesSDKVersion(self, version):
+        return BuildEnvironment.satisfiesVersion(version, self.sdk_version)
 
     def setUUID(self, uuid):
         if self.deobfuscator is not None:
