@@ -76,6 +76,10 @@ class BitcodeBundle(xar):
             env.setPlatform(self.platform)
         if env.translate_watchos and env.getPlatform() == "watchos" and arch == "armv7k":
             self.arch = "arm64_32"
+        self._linker_options = [x.text if x.text is not None else "" for x in
+                                self.subdoc.find("link-options").findall("option")]
+        self.is_swift_in_os = any(flag == "-rpath" and opt == "/usr/lib/swift"
+                                  for flag, opt in zip(self._linker_options, self._linker_options[1:]))
 
     def __repr__(self):
         return self.stdout
@@ -83,8 +87,7 @@ class BitcodeBundle(xar):
     @property
     def linkOptions(self):
         """Return all the link options"""
-        linker_options = [x.text if x.text is not None else "" for x in
-                          self.subdoc.find("link-options").findall("option")]
+        linker_options = self._linker_options
         if not ld_option_verifier.verify(linker_options):
             env.error(u"Linker option verification "
                       "failed for bundle {} ({})".format(
@@ -315,7 +318,7 @@ class BitcodeBundle(xar):
         if dylibs_node is not None:
             for lib_node in dylibs_node.iter():
                 if lib_node.tag == "lib":
-                    lib_path = env.resolveDylibs(self.arch, lib_node.text)
+                    lib_path = env.resolveDylibs(self.arch, lib_node.text, is_swift_in_os=self.is_swift_in_os)
                     linker.addArgs([lib_path])
                 elif lib_node.tag == "weak":
                     # allow weak framework to be missing. If they provide no

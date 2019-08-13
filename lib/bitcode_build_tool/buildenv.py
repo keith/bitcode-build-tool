@@ -327,7 +327,7 @@ class BuildEnvironment(object):
         # return None if not found
         return None
 
-    def resolveDylibs(self, arch, lib, allow_failure=False):
+    def resolveDylibs(self, arch, lib, allow_failure=False, is_swift_in_os=False):
         # verify mode, always succeed
         if self.verify_mode:
             return lib
@@ -346,14 +346,30 @@ class BuildEnvironment(object):
                 self.debug("Found framework/dylib: {}".format(found))
                 return found
         # assume this is from user (aka Payload)
-        # strip the path if fall throught from system frameworks
+        # strip the path if fall through from system frameworks
         libname = os.path.basename(lib)
+
+        # for swift in the OS, always try use the one from Toolchain, then SDK. (/usr/lib/swift)
+        if libname.startswith("libswift") and is_swift_in_os:
+            # try toolchain
+            found = self.findLibraryInDir(os.path.join(self.getToolchainDir(),
+                                                       "usr", "lib", "swift", self.getPlatform()),
+                                          libname)
+            if found:
+                self.debug("Found framework/dylib: {}".format(found))
+                return found
+            # try SDK
+            found = self.findLibraryInDir(os.path.join(self.sdk, "usr", "lib", "swift"), libname)
+            if found:
+                self.debug("Found framework/dylib: {}".format(found))
+                return found
+
         # search the dylib list first
         if libname in self._dylib_list:
             return self._dylib_list[libname]
         # search files in the -L path then
         toolchain_dylib_path = []
-        # add clang libaries for the platform to search path
+        # add clang libraries for the platform to search path
         toolchain_dylib_path.append(os.path.dirname(self.getlibclang_rt(arch)))
         # add the swift libraries for the platform to search path
         toolchain_dylib_path.append(os.path.join(self.getToolchainDir(),
