@@ -74,6 +74,10 @@ class ClangOptVerifier(OptionVerifier):
         self.add_argument('-target-abi')
         self.add_argument('-faligned-alloc-unavailable', action='store_true')
         self.add_argument('-mfloat-abi')
+        self.add_argument('-mreassociate', action='store_true')
+        self.add_argument('-fno-trapping-math', action='store_true')
+        self.add_argument('-ffast-math', action='store_true')
+        self.add_argument('-ffinite-math-only', action='store_true')
         self.add_argument('-mllvm')
 
 
