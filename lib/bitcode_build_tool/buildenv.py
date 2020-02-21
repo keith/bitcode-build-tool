@@ -6,7 +6,7 @@ import tempfile
 import shutil
 import json
 from multiprocessing.pool import ThreadPool
-from translate import FrameworkUpgrader
+from .translate import FrameworkUpgrader
 
 
 class BitcodeBuildFailure(Exception):
@@ -77,7 +77,7 @@ class LogDeobfuscator(object):
                 sym = symbol_map[i + 1].encode("UTF-8")
                 new_msg = msg.replace("__hidden#" + number + "_",
                                       sym.strip())
-            except ValueError, IndexError:
+            except (ValueError, IndexError):
                 return None
             if new_msg == msg:
                 return None  # Don't infinite loop
@@ -335,9 +335,6 @@ class BuildEnvironment(object):
         # verify mode, always succeed
         if self.verify_mode:
             return lib
-        # do all the path computation with raw encoding
-        if isinstance(lib, unicode):
-            lib = lib.encode('utf-8')
         # Search for system framework and dylibs
         if lib.startswith("{SDKPATH}"):
             # Check if framework upgrading is needed
@@ -388,15 +385,15 @@ class BuildEnvironment(object):
         for search_path in dylib_search_path:
             check_path = self.findLibraryInDir(search_path, libname, True)
             if check_path:
-                self.debug(u"Found framework/dylib: {}".format(unicode(check_path, "utf-8")))
+                self.debug("Found framework/dylib: {}".format(check_path))
                 return check_path
         if allow_failure:
-            self.warning(u"{} not found in dylib search path".format(unicode(libname, "utf-8")))
+            self.warning("{} not found in dylib search path".format(libname))
             return None
         else:
-            unicode_search_path = u", ".join(u'"{}"'.format(unicode(c, 'utf-8')) for c in dylib_search_path)
-            self.debug(u"Search Path: {}".format(unicode_search_path))
-            self.error(u"{} not found in dylib search path".format(unicode(libname, "utf-8")))
+            unicode_search_path = ", ".join(c for c in dylib_search_path)
+            self.debug("Search Path: {}".format(unicode_search_path))
+            self.error("{} not found in dylib search path".format(libname))
 
     def getToolchainDir(self):
         """Find toolchain directory"""
@@ -424,7 +421,7 @@ class BuildEnvironment(object):
             out = subprocess.check_output(
                 [clang, "-arch", arch, "/dev/null",
                     "-isysroot", self.getSDK(), "-###"],
-                stderr=subprocess.STDOUT)
+                stderr=subprocess.STDOUT).decode('utf-8')
             clang_rt = out.split('\"')[-2]
             self._tool_cache["libclang_rt"] = clang_rt
             return clang_rt
@@ -458,7 +455,7 @@ class BuildEnvironment(object):
             ld_version = self._tool_cache["ld_version"]
         except KeyError:
             linker_vers = subprocess.check_output([self.getTool('ld'), '-v'],
-                                                  stderr=subprocess.STDOUT)
+                                                  stderr=subprocess.STDOUT).decode('utf-8')
             ld_version = linker_vers.split('\n')[0].split('-')[-1]
             self._tool_cache["ld_version"] = ld_version
         finally:

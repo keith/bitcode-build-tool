@@ -1,9 +1,9 @@
 import os
-import cmdtool
 import shutil
 
-from bundle import BitcodeBundle
-from buildenv import env
+from . import cmdtool
+from .bundle import BitcodeBundle
+from .buildenv import env
 
 
 class MachoType(object):
@@ -16,15 +16,15 @@ class MachoType(object):
 
     @staticmethod
     def getType(path):
-        with open(path, "r") as f:
+        with open(path, "rb") as f:
             magic = f.read(4)
-            if (magic == "cafebabe".decode("hex") or
-                    magic == "bebafeca".decode("hex")):
+            if (magic == bytearray.fromhex("cafebabe") or
+                    magic == bytearray.fromhex("bebafeca")):
                 return MachoType.Fat
-            elif (magic == "feedface".decode("hex") or
-                    magic == "feedfacf".decode("hex") or
-                    magic == "cefaedfe".decode("hex") or
-                    magic == "cffaedfe".decode("hex")):
+            elif (magic == bytearray.fromhex("feedface") or
+                    magic == bytearray.fromhex("feedfacf") or
+                    magic == bytearray.fromhex("cefaedfe") or
+                    magic == bytearray.fromhex("cffaedfe")):
                 return MachoType.Thin
             else:
                 return MachoType.Error
@@ -42,7 +42,7 @@ class MachoType(object):
             try:
                 begin = message.index("are:") + 1
             except ValueError:
-                env.error("Cound not detect architecture of the MachO file")
+                env.error("Could not detect architecture of the MachO file")
             else:
                 return message[begin:]
 
@@ -123,8 +123,7 @@ class Macho(object):
             return file
 
     def buildBitcode(self, arch):
-        output_path = os.path.join(self._temp_dir,
-                                   self.name + "." + arch + ".out")
+        output_path = os.path.join(self._temp_dir, '{}.{}.out'.format(self.name, arch))
         bundle = self.getXAR(arch)
         env.setUUID(self.uuid[arch])
         bitcode_bundle = BitcodeBundle(arch, bundle, output_path).run()
@@ -162,7 +161,7 @@ class Macho(object):
 </dict>
 </plist>"""
         if not os.access(resource_dir, os.W_OK):
-            env.error(u"Dsym bunlde not writeable: {}".format(bundle_path))
+            env.error(u"Dsym bundle not writeable: {}".format(bundle_path))
         for arch in self.archs:
             try:
                 old_uuid = self.uuid[arch]

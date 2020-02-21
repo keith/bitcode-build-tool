@@ -5,9 +5,9 @@ import sys
 import os
 import argparse
 
-import cmdtool
-from macho import Macho, MachoType
-from buildenv import env
+from . import cmdtool
+from .macho import Macho, MachoType
+from .buildenv import env
 
 
 def parse_args(args):
@@ -80,14 +80,14 @@ def main(args=None):
             env.error(u"Input is not a macho file: {}".format(
                     args.input_macho_file))
 
-        map(input_macho.buildBitcode, input_macho.getArchs())
+        for arch in input_macho.getArchs():
+            input_macho.buildBitcode(arch)
 
         if (args.dsym_output is not None and
             not any([x.contain_symbols for x in input_macho.output_slices]) and
                 args.symbol_map is None):
             env.warning(
-                u"Cannot genarte useful dsym from input macho file: {}".format(
-                    unicode(args.input_macho_file, 'utf-8')))
+                "Cannot generate useful dsym from input macho file: {}".format(args.input_macho_file))
 
         if not args.verify:
             input_macho.installOutput(args.output)

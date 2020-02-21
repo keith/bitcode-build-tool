@@ -3,7 +3,7 @@ import subprocess
 import datetime
 import sys
 
-from buildenv import env, BitcodeBuildFailure
+from .buildenv import env, BitcodeBuildFailure
 
 
 class Cmd(object):
@@ -24,13 +24,13 @@ class Cmd(object):
                                              self.BOLD_END, self.working_dir)
         else:
             info = u"{}: cd {}\n".format(type(self).__name__, self.working_dir)
-        cmd_string = u" ".join(u'"{}"'.format(c if isinstance(c, unicode) else unicode(c, 'utf-8')) for c in self.cmd)
+        cmd_string = ' {}'.format(self.cmd)
         if self.stdout is None:
             return u"{}{}\n".format(info, cmd_string)
         else:
-            return u"{}{}\n-= Output =-\n{}Exited with {}\n".format(info, cmd_string,
-                                                                    unicode(self.stdout, 'utf-8'),
-                                                                    self.returncode)
+            return '{}{}\n-= Output =-\n{}Exited with {}\n'.format(info,
+                                                                   cmd_string, self.stdout,
+                                                                   self.returncode)
 
     def run(self):
         self.run_cmd(False)
@@ -49,14 +49,14 @@ class Cmd(object):
             end_time = datetime.datetime.now()
         except subprocess.CalledProcessError as e:
             self.returncode = e.returncode
-            self.stdout = e.output
+            self.stdout = e.output.decode('utf-8')
             if xfail:
                 env.log(self)
             else:
                 env.error(self)
         else:
             self.returncode = 0
-            self.stdout = out
+            self.stdout = out.decode('utf-8')
             env.log(self)
             env.debug("Command took {} seconds".format(
                 (end_time - start_time).seconds))

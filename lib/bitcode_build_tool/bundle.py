@@ -3,11 +3,11 @@ import subprocess
 import shutil
 import xml.etree.ElementTree as ET
 
-from buildenv import env, BitcodeBuildFailure, BuildEnvironment
-from cmdtool import Clang, Swift, Ld, CopyFile, RewriteArch
-from verifier import clang_option_verifier, ld_option_verifier, \
+from .buildenv import env, BitcodeBuildFailure, BuildEnvironment
+from .cmdtool import Clang, Swift, Ld, CopyFile, RewriteArch
+from .verifier import clang_option_verifier, ld_option_verifier, \
     swift_option_verifier
-from translate import SwiftArgTranslator, ClangCC1Translator
+from .translate import SwiftArgTranslator, ClangCC1Translator
 
 
 class xar(object):
@@ -168,8 +168,8 @@ class BitcodeBundle(xar):
 
     def getFileNode(self, file_type):
         """Return all the XML node of file type"""
-        return filter(lambda x: x.find("file-type").text == file_type,
-                      self.toc.findall("file"))
+        return list(filter(lambda x: x.find("file-type").text == file_type,
+                      self.toc.findall("file")))
 
     def constructBitcodeJob(self, xml_node):
         """construct a single bitcode workload"""
@@ -265,22 +265,22 @@ class BitcodeBundle(xar):
         # handle bitcode input
         bitcode_files = self.getFileNode("Bitcode")
         if len(bitcode_files) > 0:
-            compiler_jobs = map(self.constructBitcodeJob, bitcode_files)
+            compiler_jobs = list(map(self.constructBitcodeJob, bitcode_files))
             linker_inputs.extend(compiler_jobs)
         # object input
         object_files = self.getFileNode("Object")
         if len(object_files) > 0:
             if env.getPlatform() == "watchos":
                 env.error("Watch platform doesn't support object inputs")
-            object_jobs = map(self.constructObjectJob, object_files)
+            object_jobs = list(map(self.constructObjectJob, object_files))
             linker_inputs.extend(object_jobs)
         # run compilation
         env.map(self.run_job, linker_inputs)
         # run bundle compilation in sequential to avoid dead-lock
         bundle_files = self.getFileNode("Bundle")
         if len(bundle_files) > 0:
-            bundle_jobs = map(self.constructBundleJob, bundle_files)
-            map(self.run_job, bundle_jobs)
+            bundle_jobs = list(map(self.constructBundleJob, bundle_files))
+            list(map(self.run_job, bundle_jobs))
             linker_inputs.extend(bundle_jobs)
         # sort object inputs
         inputs = sorted([os.path.basename(x.output) for x in linker_inputs])
