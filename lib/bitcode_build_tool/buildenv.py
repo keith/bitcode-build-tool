@@ -74,7 +74,7 @@ class LogDeobfuscator(object):
             number = msg[start_index:end_index]
             try:
                 i = int(number)
-                sym = symbol_map[i + 1].encode("UTF-8")
+                sym = symbol_map[i + 1]
                 new_msg = msg.replace("__hidden#" + number + "_",
                                       sym.strip())
             except (ValueError, IndexError):
