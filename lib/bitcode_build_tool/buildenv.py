@@ -239,7 +239,7 @@ class BuildEnvironment(object):
         if self.sdk is None:
             cmd = self.XCRUN + ["--show-sdk-path"]
             try:
-                sdk = subprocess.check_output(cmd, env=self.XCRUN_ENV)
+                sdk = subprocess.check_output(cmd, env=self.XCRUN_ENV).decode('utf-8')
             except subprocess.CalledProcessError:
                 env.error("Could not infer SDK path")
             self.setSDKPath(sdk.split()[0])
@@ -275,7 +275,7 @@ class BuildEnvironment(object):
             self.debug("Inferring {} from xcrun".format(name))
             cmd = self.XCRUN + ["-f", name]
             try:
-                out = subprocess.check_output(cmd, env=self.XCRUN_ENV)
+                out = subprocess.check_output(cmd, env=self.XCRUN_ENV).decode('utf-8')
             except subprocess.CalledProcessError:
                 pass
             else:

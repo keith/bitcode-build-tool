@@ -62,6 +62,14 @@ class ClangOptVerifier(OptionVerifier):
         self.add_argument('-disable-llvm-passes', action='store_true')
         # Codegen/Asm options
         self.add_argument('-mdisable-tail-calls', action='store_true')
+        # ptrauth
+        self.add_argument('-fptrauth-returns', action='store_true')
+        self.add_argument('-fptrauth-intrinsics', action='store_true')
+        self.add_argument('-fptrauth-calls', action='store_true')
+        self.add_argument('-fptrauth-indirect-gotos', action='store_true')
+        self.add_argument('-fptrauth-auth-traps', action='store_true')
+        self.add_argument('-fptrauth-abi-version')
+        self.add_argument('-fptrauth-objc-isa-for-clang', action='store_true')
         # FP options
         self.add_argument('-mlimit-float-precision', action='store_true')
         self.add_argument('-menable-no-infs', action='store_true')
@@ -78,6 +86,8 @@ class ClangOptVerifier(OptionVerifier):
         self.add_argument('-fno-trapping-math', action='store_true')
         self.add_argument('-ffast-math', action='store_true')
         self.add_argument('-ffinite-math-only', action='store_true')
+        self.add_argument('-fno-rounding-math', action='store_true')
+        self.add_argument('-frounding-math', action='store_true')
         self.add_argument('-mllvm')
 
 
