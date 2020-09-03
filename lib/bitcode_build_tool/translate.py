@@ -13,11 +13,13 @@ class ClangCC1Translator:
         "-O0": "-O1",
     }
 
+    REMOVE_ARGS = [ "-fno-rounding-math" ]
+
     @staticmethod
     def upgrade(opts, arch):
         new_opts = [ClangCC1Translator.ARG_MAP[x]
                     if x in ClangCC1Translator.ARG_MAP else x
-                    for x in opts]
+                    for x in opts if x not in ClangCC1Translator.REMOVE_ARGS ]
         new_opts.extend(ClangCC1Translator.compatibility_flags(arch))
         return new_opts
 
