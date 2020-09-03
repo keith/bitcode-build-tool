@@ -88,6 +88,8 @@ class ClangOptVerifier(OptionVerifier):
         self.add_argument('-ffinite-math-only', action='store_true')
         self.add_argument('-fno-rounding-math', action='store_true')
         self.add_argument('-frounding-math', action='store_true')
+        # Other
+        self.add_argument('-fcompatibility-qualified-id-block-type-checking', action='store_true')
         self.add_argument('-mllvm')
 
 
