@@ -136,6 +136,17 @@ class BitcodeBundle(xar):
             except ValueError:
                 pass  # no entry point, `ld -r`
 
+        # Fix up the wrongly encoded -sectalign version.
+        # "-sectalign" takes 3 arguments, but if two were encoded, use a default 0x4000 alignment.
+        idx = 0
+        try:
+            while(True):
+                idx = linker_options.index("-sectalign", idx + 1)
+                if idx + 3 < len(linker_options) and linker_options[idx + 3].startswith("-"):
+                    linker_options.insert(idx + 3, "0x4000")
+        except ValueError:
+            pass
+
         return linker_options
 
     @property

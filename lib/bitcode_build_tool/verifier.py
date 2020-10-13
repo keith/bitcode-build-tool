@@ -134,6 +134,7 @@ class LinkerOptVerifier(OptionVerifier):
         self.add_argument('-no_objc_category_merging', action='store_true')
         self.add_argument('-sectcreate', nargs=3)
         self.add_argument('-platform_version', nargs=3)
+        self.add_argument('-sectalign', nargs="+")
 
     def verify(self, options):
         # delete -e and its argument
