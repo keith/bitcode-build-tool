@@ -352,11 +352,11 @@ class BitcodeBundle(xar):
         try:
             self.run_job(linker)
         except BitcodeBuildFailure as e:
-            if self.contain_swift and self.is_translate_watchos and not self.force_optimize_swift:
+            if self.contain_swift and not self.force_optimize_swift:
                 env.warning("Rebuild failing swift project with optimization")
                 rebuild = BitcodeBundle(self.arch, self.input, self.output)
                 rebuild.force_optimize_swift = True
-                rebuild.is_compile_with_clang = True
+                rebuild.is_compile_with_clang = self.is_translate_watchos
                 return rebuild.run()
             else:
                 raise e
