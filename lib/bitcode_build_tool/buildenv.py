@@ -67,23 +67,20 @@ class LogDeobfuscator(object):
             return None
         with open(self.bcsymbolmap, 'r') as f:
             symbol_map = f.readlines()
-        while msg.find("__hidden#") != -1:
-            index = msg.find("__hidden#")
-            start_index = index + 9
-            end_index = msg.find('_', start_index)
-            number = msg[start_index:end_index]
+        seg_log = msg.split("__hidden#")
+        new_msg = []
+        for p in seg_log:
+            index = p.find("_")
+            number = p[:index]
             try:
                 i = int(number)
                 sym = symbol_map[i + 1]
-                new_msg = msg.replace("__hidden#" + number + "_",
-                                      sym.strip())
+                new_msg.append(sym.strip())
+                new_msg.append(p[index + 1:])
             except (ValueError, IndexError):
-                return None
-            if new_msg == msg:
-                return None  # Don't infinite loop
-            else:
-                msg = new_msg
-        return msg
+                new_msg.append(p)
+
+        return "".join(new_msg)
 
 
 class BuildEnvironment(object):

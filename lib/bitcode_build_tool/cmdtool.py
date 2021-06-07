@@ -17,6 +17,7 @@ class Cmd(object):
         self.cmd = cmd
         self.stdout = None
         self.returncode = 0
+        self.env = None
 
     def __repr__(self):
         if sys.stdout.isatty():
@@ -43,6 +44,7 @@ class Cmd(object):
             if not os.environ.get('TESTING', False):
                 out = subprocess.check_output(self.cmd,
                                               stderr=subprocess.STDOUT,
+                                              env=self.env,
                                               cwd=self.working_dir)
             else:
                 out = "Skipped for testing mode."
@@ -129,6 +131,7 @@ class Ld(CompileCmd):
         self.cmd.extend(args)
 
     def run(self, dry_run=False):
+        self.env = { "LD_WARN_ON_SWIFT_ABI_VERSION_MISMATCHES" : "1" }
         self.cmd.extend(["-o", self.output])
         try:
             self.run_cmd(False)
