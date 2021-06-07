@@ -70,6 +70,7 @@ class ClangOptVerifier(OptionVerifier):
         self.add_argument('-fptrauth-auth-traps', action='store_true')
         self.add_argument('-fptrauth-abi-version')
         self.add_argument('-fptrauth-objc-isa-for-clang', action='store_true')
+        self.add_argument('-fptrauth-objc-isa-mode')
         # FP options
         self.add_argument('-mlimit-float-precision', action='store_true')
         self.add_argument('-menable-no-infs', action='store_true')
@@ -89,7 +90,10 @@ class ClangOptVerifier(OptionVerifier):
         self.add_argument('-fno-rounding-math', action='store_true')
         self.add_argument('-frounding-math', action='store_true')
         # Other
+        self.add_argument('--mrelax-relocations', action='store_true')
         self.add_argument('-fcompatibility-qualified-id-block-type-checking', action='store_true')
+        self.add_argument('-fvisibility-inlines-hidden-static-local-var', action='store_true')
+        self.add_argument('-cc1', action='store_true')
         self.add_argument('-mllvm')
 
 
