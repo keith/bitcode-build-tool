@@ -80,9 +80,24 @@ class BitcodeBundle(xar):
                                 self.subdoc.find("link-options").findall("option")]
         self.is_swift_in_os = any(flag == "-rpath" and opt == "/usr/lib/swift"
                                   for flag, opt in zip(self._linker_options, self._linker_options[1:]))
+        self.need_swift_async_patch = self.needSwiftAsyncPatch()
 
     def __repr__(self):
         return self.stdout
+
+    def needSwiftAsyncPatch(self):
+        if self.platform == "iOS" and BuildEnvironment.satisfiesVersion("15.2", self.sdk_version):
+            return False
+        if self.platform == "tvOS" and BuildEnvironment.satisfiesVersion("15.2", self.sdk_version):
+            return False
+        if self.platform == "watchOS" and BuildEnvironment.satisfiesVersion("8.3", self.sdk_version):
+            return False
+
+        dylibs_node = self.subdoc.find("dylibs")
+        if dylibs_node is not None:
+            return any(lib.text.endswith("/usr/lib/swift/libswift_Concurrency.dylib")
+                       for lib in dylibs_node)
+        return False
 
     @property
     def linkOptions(self):
@@ -146,6 +161,9 @@ class BitcodeBundle(xar):
                     linker_options.insert(idx + 3, "0x4000")
         except ValueError:
             pass
+
+        if self.need_swift_async_patch:
+            linker_options.extend(["-rpath", "/usr/lib/swift"])
 
         return linker_options
 
@@ -236,6 +254,8 @@ class BitcodeBundle(xar):
                     if self.is_translate_watchos:
                         options = SwiftArgTranslator.translate_triple(options)
                     swift.addArgs(options)
+                    if self.need_swift_async_patch:
+                        swift.addArgs(["-swift-async-frame-pointer=never"])
                 else:
                     env.error(u"Swift option verification "
                               "failed for bitcode {} ({})".format(
