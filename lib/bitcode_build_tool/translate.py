@@ -13,7 +13,7 @@ class ClangCC1Translator:
         "-O0": "-O1",
     }
 
-    REMOVE_ARGS = [ "-fno-rounding-math" ]
+    REMOVE_ARGS = [ "-fno-rounding-math", "-fno-trapping-math" ]
 
     @staticmethod
     def upgrade(opts, arch):
