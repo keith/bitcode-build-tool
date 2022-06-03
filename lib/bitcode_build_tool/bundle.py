@@ -78,7 +78,9 @@ class BitcodeBundle(xar):
             self.arch = "arm64_32"
         self._linker_options = [x.text if x.text is not None else "" for x in
                                 self.subdoc.find("link-options").findall("option")]
-        self.is_swift_in_os = any(flag == "-rpath" and opt == "/usr/lib/swift"
+        is_swift_concurrency = any(flag == "-install_name" and opt == "@rpath/libswift_Concurrency.dylib"
+                                   for flag, opt in zip(self._linker_options, self._linker_options[1:]))
+        self.is_swift_in_os = is_swift_concurrency or any(flag == "-rpath" and opt == "/usr/lib/swift"
                                   for flag, opt in zip(self._linker_options, self._linker_options[1:]))
         self.need_swift_async_patch = self.needSwiftAsyncPatch()
 
