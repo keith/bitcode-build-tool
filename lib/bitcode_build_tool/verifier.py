@@ -93,6 +93,10 @@ class ClangOptVerifier(OptionVerifier):
         self.add_argument('--mrelax-relocations', action='store_true')
         self.add_argument('-fcompatibility-qualified-id-block-type-checking', action='store_true')
         self.add_argument('-fvisibility-inlines-hidden-static-local-var', action='store_true')
+        self.add_argument('-finline-functions', action='store_true')
+        self.add_argument('-fapprox-func', action='store_true')
+        self.add_argument('-fobjc-msgsend-selector-stubs', action='store_true')
+        self.add_argument('-fdiagnostics-hotness-threshold')
         self.add_argument('-cc1', action='store_true')
         self.add_argument('-mllvm')
 

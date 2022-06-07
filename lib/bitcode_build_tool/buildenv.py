@@ -94,7 +94,7 @@ class BuildEnvironment(object):
             "..",
             "bin"))
     DEVELOPER_DIR = os.path.realpath(os.path.join(BUILD_TOOL_LIB_PATH,
-                                                  "..", ".."))
+                                                  "..", "..", ".."))
 
     PLATFORM = {"iPhoneOS": "iphoneos",
                 "iOS" : "iphoneos",
